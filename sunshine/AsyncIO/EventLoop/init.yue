@@ -1,0 +1,26 @@
+Object = require("sunshine.Object")
+
+coroutine = coroutine
+
+class EventLoop extends Object
+	init: (args) =>
+		p = @__private
+		with args
+			--TODO
+
+	get_tasks: (key)        => @__private[kev]
+	set_tasks: (key, value) => @__private[kev] = value
+
+	run: () =>
+		while true
+			for k, task in ipairs(@tasks)
+				completed = status_map[coroutine.resume(task)]
+
+				if completed
+					table.remove(@tasks, k)
+					break
+
+	status_map: {
+		suspended: false
+		dead: true
+	}

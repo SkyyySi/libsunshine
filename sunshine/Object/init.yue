@@ -1,0 +1,69 @@
+import FrozenObjectMutationException from require("sunshine.Exception")
+
+class Object
+	new: (args={}) =>
+		rawset(@, "__private", {
+			initialized: false
+			frozen: false
+			properties: {}
+			auto_properties: false
+
+			-- get: (key)        => @__private[kev]
+			-- set: (key, value) => @__private[kev] = value
+		})
+
+		if @init
+			@init(args)
+
+		@__private.initialized = true
+	
+	<tostring>: () => "<'#{@@__name}' instance>"
+
+	repr: () => "<'\027[1m#{@@__name}\027[0m' \027[3minstance\027[0m>"
+
+	<index>: (key) =>
+		if key == "__private"
+			return rawget(@, key)
+
+		p = rawget(@, "__private")
+
+		if getter = @["get_" .. key]
+			return getter(@)
+
+		if getter = p.get
+			return getter(@, key)
+
+		if item = rawget(@@, key)
+			return item
+
+		if p.auto_properties
+			@["get_" .. key] ??= () => p[key]
+			return @["get_" .. key]()
+
+		@.<>[key]
+
+	<newindex>: (key, value) =>
+		if p.frozen
+			FrozenObjectMutationException()::raise()
+			return
+
+		if key == "__private"
+			rawset(@, key, value)
+			return
+
+		p = rawget(@, "__private")
+
+		if setter = @["set_" .. key]
+			setter(@, value)
+			return
+
+		if setter = p.set
+			setter(@, key, value)
+			return
+
+		if p.auto_properties
+			@["set_" .. key] = (value) => p[key] = value
+			@["set_" .. key](value)
+			return
+
+		rawset(@, key, value)

@@ -1,0 +1,37 @@
+local traceback
+try
+	traceback = require("yue").traceback
+catch err
+	traceback = debug.traceback
+
+Util = require("sunshine.Util")
+
+export class Exception
+	new: (args={}) =>
+		@message = args.message ?? @@default_message
+
+	--- Format sequences:
+	---   - %e = The name of the exception (`@@__name`)
+	---   - %m = The message (`@message`)
+	message_format: "An error occurred"
+
+	raise: () =>
+		error()
+		print(traceback(@, 2)::gsub("\r\n", "\n"))
+	
+	assert: (cond) =>
+		if not cond
+			@raise()
+
+	<tostring>: () =>
+		"\027[1;31m#{@@__name}\027[0m\027[31m" .. Util.format(@message_format, { e: @@__name, m: @message }) .. "\027[0m"
+
+export class FrozenObjectMutationException extends Exception
+	message_format: "Attempted to modify a frozen object"
+
+export class MissingArgumentException extends MissingParameterException
+	message_format: "Missing required table argument"
+
+	assert: (argument) =>
+		if argument == nil
+			@raise()

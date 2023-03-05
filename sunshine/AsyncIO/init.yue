@@ -1,0 +1,7 @@
+coroutine = coroutine
+
+export Task = require("sunshine.AsyncIO.Task")
+
+export async = (fn) -> coroutine.create(fn)
+
+export await = (...) -> coroutine.yield(...)

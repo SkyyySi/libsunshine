@@ -1,0 +1,67 @@
+import MissingArgumentException from require("sunshine.Exception")
+
+--- Format:
+---
+--- ```
+--- expected_args = {
+--- 	--- { names: table<number, string|number>, optional: boolean, defaults: table|nil  }
+--- 	{ names: { "foo", 1 }, optional: true, defaults: { "bar" } }
+--- }
+--- ```
+---
+--- The first name in `names`
+---
+--- If an argument is `nil` and `optional` is `false`, a `MissingArgumentException` will be thrown.
+---
+export parse_function_args = (args, expected_args) ->
+	for k, arg in ipairs(args)
+		
+
+export format = (str, data) ->
+	for k, v in pairs(data)
+		--- `::gsub("%%", "%%")` turns `"%"` into `"%%"`. This is because
+		--- the first argument to `gsub` is a Lua pattern while the second
+		--- is a string litteral (as a reminder: the Lua pattern `"%%"` is
+		--- a litteral `'%'` character)
+		str = str::gsub("%%#{k::gsub("%%", "%%")}", v)
+
+	str
+
+--[[
+make_getter = (field) => () -> rawget(@__private, field)
+
+make_setter = (field, signal) =>
+	if signal
+		(value) ->
+			@emit_signal(signal, value)
+			rawset(@__private, field, value)
+	else
+		(value) -> rawset(@__private, field, value)
+
+export create_properties = (args) ->
+	with args
+		.object ??= args[1]
+		MissingArgumentException::assert(.object, "object", "util.gen_properties")
+		.properties ??= args[2]
+		MissingArgumentException::assert(.properties, "properties", "util.gen_properties")
+		.get ??= true
+		.set ??= true
+		.raw ??= true
+		.signals ??= true
+
+	for prop in *args.properties
+		@__private[prop] ??= {}
+
+		if args.get
+
+			if args.raw
+				rawset(args.object, "get_"..prop, make_getter(args.object, prop))
+			else
+				args.object["get_"..prop] = make_getter(args.object, prop)
+
+		if args.set
+			if args.raw
+				rawset(args.object, "set_"..prop, make_setter(args.object, prop, args.signals and "property::#{field}" or nil))
+			else
+				args.object["set_"..prop] = make_setter(args.object, prop, value, args.signals and "property::#{field}" or nil)
+--]]
